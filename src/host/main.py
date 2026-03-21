@@ -1,13 +1,16 @@
 from fastapi import FastAPI, Query, Body, status
 from fastapi.responses import FileResponse, PlainTextResponse, JSONResponse
+import logging
 from config import MAX_CLIENTS
-from utils import get_local_ip, create_client, Client
+from utils import get_local_ip, create_client, Client, LoggingUvicornFilter
 
 app = FastAPI(title="G.N.O.M.E")
 
 clients: dict[int, Client] = {} # id:Client
 
 map_dimensions = [800, 600]
+
+logging.getLogger("uvicorn.access").addFilter(LoggingUvicornFilter())
 
 @app.get("/")
 def root():

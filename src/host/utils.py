@@ -1,3 +1,5 @@
+from logging import Filter
+
 class Client():
     def __init__(self, id, uuid, x, y):
         self.id = id
@@ -9,6 +11,13 @@ class Client():
         self.move_queue = 0
         self.knock_over = False
         self.armed = True
+
+class LoggingUvicornFilter(Filter):
+    def filter(self, record):
+        message = record.getMessage()
+        if "GET /clients" in message:
+            return False
+        return True
 
 def get_local_ip():
     import socket
