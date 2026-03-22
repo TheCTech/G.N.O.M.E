@@ -1,9 +1,14 @@
 #include <Arduino.h>
+#include <Servo.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 #include <ESP8266WebServer.h>
 
+#define SERVO_PIN D1
+
 String uuid;
+
+Servo servo;
 
 ESP8266WebServer server(80);
 WiFiClient client;
@@ -194,9 +199,9 @@ void setWiFi() {
 }
 
 void handleRotate() {
-    String direction = server.arg("dir");
+    int direction = server.arg("dir").toInt();
 
-    Serial.println("Rotate: " + direction);
+    servo.write(servo.read() - direction);
 
     server.send(200, "text/plain", "OK");
 }
@@ -242,6 +247,10 @@ void setup() {
     uuid = WiFi.macAddress();
     Serial.println("Client started with uuid: " + uuid);
 
+    servo.attach(SERVO_PIN, 544, 2400);
+
+    servo.write(90);
+
     setupSetup();
 }
 
@@ -250,6 +259,7 @@ void loop() {
         if (!registered) {
             registerClient();
         }
+        delay(5*1000);
     } else {
         server.handleClient();
     }
