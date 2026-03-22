@@ -115,6 +115,13 @@ def set_user_variable(data: dict = Body()):
     except:
         return PlainTextResponse("Error assigning value, maybe variable name is wrong?", status.HTTP_422_UNPROCESSABLE_ENTITY)
 
+@app.post("/removeClient")
+def remove_client(id: int = Query(None)): 
+    if not id in clients.keys():
+        return PlainTextResponse("Client with specified id doesn't exist", status.HTTP_422_UNPROCESSABLE_ENTITY)
+    
+    clients.pop(id)
+
 if __name__ == "__main__":
     print(f"IP: {get_local_ip()}")
     import uvicorn

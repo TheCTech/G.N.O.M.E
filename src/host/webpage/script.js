@@ -164,6 +164,20 @@ function handleSetupInput(inputID, value) {
     updateClientsTable();
 }
 
+function removeClient() {
+    if (!confirm("Do you really wish to remove this client?")) return;
+
+    fetch("/removeClient?id="+setupClientID, {method: "POST"})
+
+    clients.splice(setupClientID, 1);
+
+    setupClientID = -1;
+
+    // Refresh view
+    drawMap();
+    updateClientsTable();
+}
+
 function updateClientsTable() {
     let table = document.getElementById("clientTable");
     if (setupClientID == -1) {
@@ -221,6 +235,8 @@ function updateClientsTable() {
         </div>
         <br><br>
         <button onclick="setSetupMode(-1)">EXIT SETUP</button>
+        <br>
+        <button onclick="removeClient()" style="background-color:red">REMOVE CLIENT</button>
         </center>`;
     }
 }
