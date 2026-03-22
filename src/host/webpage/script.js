@@ -2,8 +2,17 @@ let mapW = 800;
 let mapH = 600;
 let clients = [];
 
-let setup_mode = false;
-let setup_mode_client_id = NaN;
+
+async function fetchMap() {
+    const response = await fetch("/map");
+
+    const responseJson = await response.json();
+
+    mapW = responseJson.width;
+    mapH = responseJson.height;
+
+    drawMap();
+}
 
 function drawMap() {
     const canvas = document.getElementById("roomMap");
@@ -151,7 +160,7 @@ function updateClientsTable() {
 
 setInterval(loadClients, 2000);
 loadClients();
-drawMap();
+fetchMap();
 
 document.addEventListener("DOMContentLoaded", () => {
     document.querySelector(".resizeBtn").addEventListener("click", resizeMap);
