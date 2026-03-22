@@ -29,20 +29,15 @@ def return_script():
     return FileResponse("webpage/script.js")
 
 @app.get("/register")
-def handle_register(uuid: str = Query(None), x: str = Query(None), y: str = Query(None)):
+def handle_register(uuid: str = Query(None)):
     if not uuid:
         return PlainTextResponse("Missing uuid", status.HTTP_422_UNPROCESSABLE_ENTITY)
-    
-    if not x or not y:
-        return PlainTextResponse("Missing x or y", status.HTTP_422_UNPROCESSABLE_ENTITY)
     
     print(f"Client with uuid: {uuid} trying to connect")
 
     for client_id in clients.keys():
         if uuid == clients[client_id].uuid:
             print(f"Reconnected as C{client_id}")
-            clients[client_id].x = x
-            clients[client_id].y = y
             return PlainTextResponse(f"Reconnected as C{client_id}", status.HTTP_200_OK)
         
     for client_id in range(MAX_CLIENTS):
@@ -56,7 +51,7 @@ def handle_register(uuid: str = Query(None), x: str = Query(None), y: str = Quer
         return PlainTextResponse("Too many clients", status.HTTP_429_TOO_MANY_REQUESTS)
 
     print(f"Connected as C{client_id}")
-    create_client(clients, client_id, uuid, x, y)
+    create_client(clients, client_id, uuid)
     return PlainTextResponse(f"Connected as C{client_id}", status.HTTP_200_OK)
 
 @app.get("/clients")

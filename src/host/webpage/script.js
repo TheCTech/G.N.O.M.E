@@ -2,6 +2,7 @@ let mapW = 800;
 let mapH = 600;
 let clients = [];
 
+let setupClientID = -1;
 
 async function fetchMap() {
     const response = await fetch("/map");
@@ -35,7 +36,7 @@ function drawMap() {
 function drawClient(ctx, client) {
     ctx.beginPath();
     ctx.arc(client.x, client.y, 5, 0, Math.PI * 2);
-    ctx.fillStyle = !client.armed ? "red" : "blue";
+    ctx.fillStyle = !client.armed ? "red" : client.id == setupClientID ? "green" : "blue";
     ctx.fill();
     ctx.strokeStyle = "black";
     ctx.stroke();
@@ -108,6 +109,7 @@ function sendKO(id) {
 }
 
 function loadClients() {
+    if (setupClientID != -1) return;
     fetch("/clients")
         .then(r => r.json())
         .then(data => {
@@ -117,45 +119,110 @@ function loadClients() {
         });
 }
 
+function setSetupMode(id) {
+    if (id == -1 && setupClientID != -1) {
+        const client = clients.find(c => c.id === setupClientID);
+
+        fetch("/setUser", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ variable: "x", id: client.id, value: client.x })
+        });
+
+        fetch("/setUser", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ variable: "y", id: client.id, value: client.y })
+        });
+    }
+
+    setupClientID = id;
+
+    // Refresh view
+    drawMap();
+    updateClientsTable();
+}
+
+function handleSetupInput(inputID, value) {
+    const client = clients.find(c => c.id === setupClientID);
+    switch (inputID) {
+        case 1:
+            client.y = value;
+            break;
+        case 2:
+            client.y = mapH - value;
+            break;
+        case 3:
+            client.x = value;
+            break;
+        case 4:
+            client.x = mapW - value;
+            break;
+    }
+
+    drawMap();
+    updateClientsTable();
+}
+
 function updateClientsTable() {
     let table = document.getElementById("clientTable");
-    table.innerHTML = `
-    <tr>
-      <th>ID</th>
-      <th>UUID</th>
-      <th>CONTROL</th>
-      <th>AUTO</th>
-      <th>QUEUE</th>
-      <th>KNOCKOUT</th>
-      <th>PLACEHOLDER</th>
-    </tr>`;
+    if (setupClientID == -1) {
+        table.innerHTML = `
+        <tr>
+        <th>ID</th>
+        <th>UUID</th>
+        <th>CONTROL</th>
+        <th>AUTO</th>
+        <th>QUEUE</th>
+        <th>KNOCKOUT</th>
+        <th>SETUP</th>
+        </tr>`;
 
-    clients.forEach(c => {
-        let checked = c.auto_move ? "checked" : "";
-        let disabled = c.auto_move || !c.armed || c.knock_over ? "disabled" : "";
-        let unarmed_disabled_text = !c.armed || c.knock_over ? "class=disabled-text" : "";
-        let unarmed_disabled = !c.armed || c.knock_over ? "disabled" : "";
+        clients.forEach(c => {
+            let checked = c.auto_move ? "checked" : "";
+            let disabled = c.auto_move || !c.armed || c.knock_over ? "disabled" : "";
+            let unarmed_disabled_text = !c.armed || c.knock_over ? "class=disabled-text" : "";
+            let unarmed_disabled = !c.armed || c.knock_over ? "disabled" : "";
 
-        table.innerHTML += `
-      <tr>
-        <td>${c.id}</td>
-        <td>${c.uuid}</td>
-        <td>
-          <button id="left_${c.id}" onclick="sendMove(${c.id}, -1)" ${disabled}>&#8592;</button>
-          <button id="right_${c.id}" onclick="sendMove(${c.id}, 1)" ${disabled}>&#8594;</button>
-        </td>
-        <td>
-          <input type="checkbox" ${checked} ${unarmed_disabled} onchange="toggleAuto(${c.id}, this)">
-        </td>
-        <td ${unarmed_disabled_text}>${c.move_queue}</td>
-        <td>
-          <button onclick="sendKO(${c.id})" style=${c.armed || c.knock_over ? "color:red;" : "background-color:red;"}>${c.armed || c.knock_over ? "KNOCK" : "REARMED"}</button>
-        </td>
-        <td>
-          <button onclick="">PLACEHOLDER</button>
-        </td>
-      </tr>`;
-    });
+            table.innerHTML += `
+        <tr>
+            <td>${c.id}</td>
+            <td>${c.uuid}</td>
+            <td>
+            <button id="left_${c.id}" onclick="sendMove(${c.id}, -1)" ${disabled}>&#8592;</button>
+            <button id="right_${c.id}" onclick="sendMove(${c.id}, 1)" ${disabled}>&#8594;</button>
+            </td>
+            <td>
+            <input type="checkbox" ${checked} ${unarmed_disabled} onchange="toggleAuto(${c.id}, this)">
+            </td>
+            <td ${unarmed_disabled_text}>${c.move_queue}</td>
+            <td>
+            <button onclick="sendKO(${c.id})" style=${c.armed || c.knock_over ? "color:red;" : "background-color:red;"}>${c.armed || c.knock_over ? "KNOCK" : "REARMED"}</button>
+            </td>
+            <td>
+            <button onclick="setSetupMode(${c.id})">SETUP</button>
+            </td>
+        </tr>`;
+        });
+    } else {
+        // Setup mode
+        const client = clients.find(c => c.id === setupClientID);
+
+        table.innerHTML = `
+        <center><br>
+        <div>
+            ↧&nbsp&nbsp<input type="number" value="${client.y}" onchange="handleSetupInput(1, this.value)">
+            ↥&nbsp&nbsp<input type="number" value="${mapH - client.y}" onchange="handleSetupInput(2, this.value)">
+        </div>
+        <br>
+        <div>
+            ↦ <input type="number" value="${client.x}" onchange="handleSetupInput(3, this.value)">
+            ↤ <input type="number" value="${mapW - client.x}" onchange="handleSetupInput(4, this.value)">
+        </div>
+        <br><br>
+        <button onclick="setSetupMode(-1)">EXIT SETUP</button>
+        </center>`;
+    }
 }
 
 setInterval(loadClients, 2000);

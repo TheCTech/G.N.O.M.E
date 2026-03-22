@@ -1,11 +1,11 @@
 from logging import Filter
 
 class Client():
-    def __init__(self, id, uuid, x, y):
+    def __init__(self, id, uuid):
         self.id = id
         self.uuid = uuid
-        self.x = x
-        self.y = y
+        self.x = 200
+        self.y = 200
 
         self.auto_move = False
         self.move_queue = 0
@@ -29,5 +29,5 @@ def get_local_ip():
 
     return ip
 
-def create_client(clients, id, uuid, x, y):
-    clients[id] = Client(id, uuid, x, y)
+def create_client(clients, id, uuid):
+    clients[id] = Client(id, uuid)
