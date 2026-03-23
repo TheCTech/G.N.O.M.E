@@ -7,6 +7,7 @@
 #define SERVO_PIN D1
 
 String uuid;
+String hid; // id on host
 
 Servo servo;
 
@@ -90,6 +91,36 @@ void registerClient() {
             
             if (httpCode == HTTP_CODE_OK) {
                 registered = true;
+
+                int index = response.indexOf("as C");
+                hid = response.substring(index + 4);
+            }
+        }
+
+        http.end();
+    }
+}
+
+void handleRotation() {
+    if (http.begin(client, "http://"+hostIP+":8000/clientsGetValue?id="+hid+"&key=move_queue")) {
+        int httpCode = http.GET();
+
+        if (httpCode > 0) {
+            String response = http.getString();
+            int move_queue = response.toInt();
+
+            if (move_queue != 0) {
+                int dir = move_queue / abs(move_queue);
+                servo.write(servo.read() + dir);
+
+                if (http.begin(client, "http://"+hostIP+":8000/setUser")) {
+                    http.addHeader("Content-Type", "application/json");
+
+                    String payload = "{\"id\": " + hid + ", \"variable\": \"move_queue\", \"value\": " + dir * -1 + ", \"addition\": true}";
+                    http.PUT(payload);
+
+                    http.end();
+                }
             }
         }
 
@@ -116,7 +147,8 @@ void loop() {
         if (!registered) {
             registerClient();
         }
-        delay(5*1000);
+        handleRotation();
+        delay(1*1000);
     } else {
         server.handleClient();
     }

@@ -70,6 +70,17 @@ def handle_clients_date_request():
         status.HTTP_200_OK
     )
 
+@app.get("/clientsGetValue")
+def clients_get_value(id: int = Query(-1), key: str = Query(None)):
+    if not id in clients.keys():
+        return PlainTextResponse("Client with specified id doesn't exist", status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+    try:
+        value = getattr(clients[id], key)
+        return PlainTextResponse(str(value), status.HTTP_200_OK)
+    except:
+        return PlainTextResponse("Error assigning value, maybe variable name is wrong?", status.HTTP_422_UNPROCESSABLE_ENTITY)
+
 @app.put("/setMap")
 def set_map(data: dict = Body()):
     global map_dimensions
@@ -116,7 +127,7 @@ def set_user_variable(data: dict = Body()):
         return PlainTextResponse("Error assigning value, maybe variable name is wrong?", status.HTTP_422_UNPROCESSABLE_ENTITY)
 
 @app.post("/removeClient")
-def remove_client(id: int = Query(None)): 
+def remove_client(id: int = Query(-1)): 
     if not id in clients.keys():
         return PlainTextResponse("Client with specified id doesn't exist", status.HTTP_422_UNPROCESSABLE_ENTITY)
     
