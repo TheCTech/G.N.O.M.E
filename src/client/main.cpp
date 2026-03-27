@@ -102,21 +102,22 @@ void registerClient() {
 }
 
 void handleRotation() {
-    if (http.begin(client, "http://"+hostIP+":8000/clientsGetValue?id="+hid+"&key=move_queue")) {
+    if (http.begin(client, "http://"+hostIP+":8000/clientsGetValue?id="+hid+"&key=target_direction")) {
         int httpCode = http.GET();
 
         if (httpCode > 0) {
             String response = http.getString();
-            int move_queue = response.toInt();
+            int target_direction = response.toInt();
+            int direction = servo.read();
 
-            if (move_queue != 0) {
-                int dir = move_queue / abs(move_queue);
+            if (target_direction != direction) {
+                int dir = (target_direction > direction) ? 1 : -1;
                 servo.write(servo.read() + dir);
 
                 if (http.begin(client, "http://"+hostIP+":8000/setUser")) {
                     http.addHeader("Content-Type", "application/json");
 
-                    String payload = "{\"id\": " + hid + ", \"variable\": \"move_queue\", \"value\": " + dir * -1 + ", \"addition\": true}";
+                    String payload = "{\"id\": " + hid + ", \"variable\": \"direction\", \"value\": " + servo.read() + ", \"addition\": false}";
                     http.PUT(payload);
 
                     http.end();

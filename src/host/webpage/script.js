@@ -79,11 +79,11 @@ function sendMove(id, value) {
     fetch("/setUser", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ variable: "move_queue", id: id, value: value, addition: true })
+        body: JSON.stringify({ variable: "target_direction", id: id, value: value, addition: true })
     });
 
     const client = clients.find(c => c.id === id);
-    client.move_queue += value;
+    client.target_direction += value;
     updateClientsTable();
 }
 
@@ -187,7 +187,8 @@ function updateClientsTable() {
         <th>UUID</th>
         <th>CONTROL</th>
         <th>AUTO</th>
-        <th>QUEUE</th>
+        <th>DIRECTION</th>
+        <th>TARGET</th>
         <th>KNOCKOUT</th>
         <th>SETUP</th>
         </tr>`;
@@ -209,7 +210,8 @@ function updateClientsTable() {
             <td>
             <input type="checkbox" ${checked} ${unarmed_disabled} onchange="toggleAuto(${c.id}, this)">
             </td>
-            <td ${unarmed_disabled_text}>${c.move_queue}</td>
+            <td ${unarmed_disabled_text}>${c.direction}</td>
+            <td ${unarmed_disabled_text}>${c.target_direction}</td>
             <td>
             <button onclick="sendKO(${c.id})" style=${c.armed || c.knock_over ? "color:red;" : "background-color:red;"}>${c.armed || c.knock_over ? "KNOCK" : "REARMED"}</button>
             </td>

@@ -61,11 +61,13 @@ def handle_clients_date_request():
             "id":client.id,
             "uuid":client.uuid,
             "auto_move":client.auto_move,
-            "move_queue":client.move_queue,
+            "target_direction":client.target_direction,
             "knock_over": client.knock_over,
             "armed": client.armed,
             "x": client.x,
-            "y": client.y
+            "y": client.y,
+            "initial_direction": client.initial_direction,
+            "direction": client.direction
             } for client in clients.values()],
         status.HTTP_200_OK
     )

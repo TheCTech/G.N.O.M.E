@@ -7,8 +7,11 @@ class Client():
         self.x = 200
         self.y = 200
 
+        self.initial_direction = 90
+        self.direction = self.initial_direction
+        self.target_direction = self.initial_direction
+        
         self.auto_move = False
-        self.move_queue = 0
         self.knock_over = False
         self.armed = True
 
