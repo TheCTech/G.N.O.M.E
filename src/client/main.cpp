@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <ArduinoJson.h>
 #include <Servo.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
@@ -102,22 +103,36 @@ void registerClient() {
 }
 
 void handleRotation() {
-    if (http.begin(client, "http://"+hostIP+":8000/clientsGetValue?id="+hid+"&key=target_direction")) {
+    if (http.begin(client, "http://" + hostIP + ":8000/getClient?id=" + hid)) {
         int httpCode = http.GET();
 
         if (httpCode > 0) {
             String response = http.getString();
-            int target_direction = response.toInt();
-            int direction = servo.read();
+
+            StaticJsonDocument<256> doc;
+            deserializeJson(doc, response);
+
+            int target_direction = doc["target_direction"];
+            int initial_direction = doc["initial_direction"];
+
+            int direction = initial_direction - 90 + servo.read();
+
+            if (direction >= 360) direction -= 360;
+            if (direction < 0) direction += 360;
 
             if (target_direction != direction) {
-                int dir = (target_direction > direction) ? 1 : -1;
+                int delta = target_direction - (initial_direction - 90 + servo.read());
+                if (delta > 180) delta -= 360;
+                if (delta < -180) delta += 360;
+
+                int dir = (delta > 0) ? 1 : -1;
+
                 servo.write(servo.read() + dir);
 
-                if (http.begin(client, "http://"+hostIP+":8000/setUser")) {
+                if (http.begin(client, "http://" + hostIP + ":8000/setUser")) {
                     http.addHeader("Content-Type", "application/json");
 
-                    String payload = "{\"id\": " + hid + ", \"variable\": \"direction\", \"value\": " + servo.read() + ", \"addition\": false}";
+                    String payload = "{\"id\": " + hid + ", \"variable\": \"direction\", \"value\": " + direction + ", \"addition\": false}";
                     http.PUT(payload);
 
                     http.end();
@@ -149,7 +164,7 @@ void loop() {
             registerClient();
         }
         handleRotation();
-        delay(1*1000);
+        delay(0.5*1000);
     } else {
         server.handleClient();
     }

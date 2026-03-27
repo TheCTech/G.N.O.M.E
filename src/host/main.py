@@ -57,31 +57,16 @@ def handle_register(uuid: str = Query(None)):
 @app.get("/clients")
 def handle_clients_date_request():
     return JSONResponse(
-        [{
-            "id":client.id,
-            "uuid":client.uuid,
-            "auto_move":client.auto_move,
-            "target_direction":client.target_direction,
-            "knock_over": client.knock_over,
-            "armed": client.armed,
-            "x": client.x,
-            "y": client.y,
-            "initial_direction": client.initial_direction,
-            "direction": client.direction
-            } for client in clients.values()],
+        [client.to_dict() for client in clients.values()],
         status.HTTP_200_OK
     )
 
-@app.get("/clientsGetValue")
-def clients_get_value(id: int = Query(-1), key: str = Query(None)):
-    if not id in clients.keys():
-        return PlainTextResponse("Client with specified id doesn't exist", status.HTTP_422_UNPROCESSABLE_ENTITY)
+@app.get("/getClient")
+def get_client(id: int = Query(-1)):
+    if id not in clients:
+        return PlainTextResponse("Client not found", status_code=422)
 
-    try:
-        value = getattr(clients[id], key)
-        return PlainTextResponse(str(value), status.HTTP_200_OK)
-    except:
-        return PlainTextResponse("Error assigning value, maybe variable name is wrong?", status.HTTP_422_UNPROCESSABLE_ENTITY)
+    return JSONResponse(clients[id].to_dict(), status_code=200)
 
 @app.put("/setMap")
 def set_map(data: dict = Body()):

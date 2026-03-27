@@ -15,6 +15,20 @@ class Client():
         self.knock_over = False
         self.armed = True
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "uuid": self.uuid,
+            "auto_move": self.auto_move,
+            "target_direction": self.target_direction,
+            "knock_over": self.knock_over,
+            "armed": self.armed,
+            "x": self.x,
+            "y": self.y,
+            "initial_direction": self.initial_direction,
+            "direction": self.direction
+        }
+
 class LoggingUvicornFilter(Filter):
     def filter(self, record):
         message = record.getMessage()

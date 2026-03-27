@@ -34,12 +34,38 @@ function drawMap() {
 }
 
 function drawClient(ctx, client) {
+    function drawLine(angle, color, lineLength) {
+        angle = -angle * Math.PI / 180;
+
+        const x2 = client.x + Math.cos(angle) * lineLength;
+        const y2 = client.y + Math.sin(angle) * lineLength;
+
+        ctx.beginPath();
+        ctx.moveTo(client.x, client.y);
+        ctx.lineTo(x2, y2);
+        ctx.strokeStyle = color;
+        ctx.stroke();
+    }
+
+    // FOV
+    drawLine(client.initial_direction + 90, "orange", 12);
+    drawLine(client.initial_direction - 90, "orange", 12);
+
+    if (setupClientID != -1) drawLine(client.initial_direction, "lime", 12);
+
     ctx.beginPath();
     ctx.arc(client.x, client.y, 5, 0, Math.PI * 2);
     ctx.fillStyle = !client.armed ? "red" : client.id == setupClientID ? "green" : "blue";
     ctx.fill();
     ctx.strokeStyle = "black";
     ctx.stroke();
+
+    if (setupClientID != -1) return;
+    // Direction
+    drawLine(client.direction, "purple", 15);
+
+    // Target
+    drawLine(client.target_direction, "red", 13);
 }
 
 function resizeMap() {
@@ -76,15 +102,27 @@ function toggleAuto(id, checkbox) {
 }
 
 function sendMove(id, value) {
+    const client = clients.find(c => c.id === id);
+    client.target_direction += value;
+
+    if (client.target_direction >= 360) client.target_direction = 0;
+    if (client.target_direction < 0) client.target_direction = 359
+
     fetch("/setUser", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ variable: "target_direction", id: id, value: value, addition: true })
+        body: JSON.stringify({ variable: "target_direction", id: id, value: client.target_direction, addition: false })
     });
 
-    const client = clients.find(c => c.id === id);
-    client.target_direction += value;
     updateClientsTable();
+    drawMap();
+}
+
+function handleOffsetSlider(value) {
+    const client = clients.find(c => c.id === setupClientID);
+    client.initial_direction = parseInt(value)*-1; // Change direction
+
+    drawMap();
 }
 
 function sendKO(id) {
@@ -133,6 +171,12 @@ function setSetupMode(id) {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ variable: "y", id: client.id, value: client.y })
+        });
+
+        fetch("/setUser", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ variable: "initial_direction", id: client.id, value: client.initial_direction })
         });
     }
 
@@ -204,8 +248,8 @@ function updateClientsTable() {
             <td>${c.id}</td>
             <td>${c.uuid}</td>
             <td>
-            <button id="left_${c.id}" onclick="sendMove(${c.id}, -1)" ${disabled}>&#8592;</button>
-            <button id="right_${c.id}" onclick="sendMove(${c.id}, 1)" ${disabled}>&#8594;</button>
+            <button id="left_${c.id}" onclick="sendMove(${c.id}, 1)" ${disabled}>&#8592;</button>
+            <button id="right_${c.id}" onclick="sendMove(${c.id}, -1)" ${disabled}>&#8594;</button>
             </td>
             <td>
             <input type="checkbox" ${checked} ${unarmed_disabled} onchange="toggleAuto(${c.id}, this)">
@@ -235,6 +279,8 @@ function updateClientsTable() {
             ↦ <input type="number" value="${client.x}" onchange="handleSetupInput(3, this.value)">
             ↤ <input type="number" value="${mapW - client.x}" onchange="handleSetupInput(4, this.value)">
         </div>
+        <br>
+        <input type="range" min="-180" max="180" value="${client.initial_direction}" step="1" oninput="handleOffsetSlider(this.value)">
         <br><br>
         <button onclick="setSetupMode(-1)">EXIT SETUP</button>
         <br>
