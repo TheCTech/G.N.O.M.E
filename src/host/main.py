@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Query, Body, status
 from fastapi.responses import FileResponse, PlainTextResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi_utils.tasks import repeat_every
 import logging
 from config import MAX_CLIENTS
@@ -13,6 +14,8 @@ map_dimensions = [800, 600]
 
 logging.getLogger("uvicorn.access").addFilter(LoggingUvicornFilter())
 
+app.mount("/static", StaticFiles(directory="webpage"))
+
 @app.get("/")
 def root():
     return {"status": "Backend running"}
@@ -20,14 +23,6 @@ def root():
 @app.get("/panel")
 def panel():
     return FileResponse("webpage/index.html")
-
-@app.get("/style.css")
-def return_style():
-    return FileResponse("webpage/style.css")
-
-@app.get("/script.js")
-def return_script():
-    return FileResponse("webpage/script.js")
 
 @app.on_event("startup")
 @repeat_every(seconds=5)
