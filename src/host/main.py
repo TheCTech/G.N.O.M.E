@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Query, Body, status
 from fastapi.responses import FileResponse, PlainTextResponse, JSONResponse
+from fastapi_utils.tasks import repeat_every
 import logging
 from config import MAX_CLIENTS
 from utils import get_local_ip, create_client, Client, LoggingUvicornFilter
@@ -27,6 +28,15 @@ def return_style():
 @app.get("/script.js")
 def return_script():
     return FileResponse("webpage/script.js")
+
+@app.on_event("startup")
+@repeat_every(seconds=5)
+def placeholder_auto_target(): ### TODO: Implement real logic ###
+    for id, client in clients.items():
+        if client.auto_move:
+            client.target_direction += 10
+    
+        if client.target_direction >= 360: client.target_direction -= 360
 
 @app.get("/register")
 def handle_register(uuid: str = Query(None)):
