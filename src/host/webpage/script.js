@@ -1,6 +1,8 @@
 let mapW = 800;
 let mapH = 600;
 let clients = [];
+let targets = [];
+let highestPriorityTargetID = -1;
 
 let setupClientID = -1;
 
@@ -30,7 +32,20 @@ function drawMap() {
     ctx.lineWidth = 3;
     ctx.strokeRect(0, 0, canvas.width, canvas.height);
 
+    targets.forEach(target => drawTarget(ctx, target));
+
     clients.forEach(client => drawClient(ctx, client));
+}
+
+function drawTarget(ctx, target) {
+    const radius = target === targets[highestPriorityTargetID] ? 4 : 3;
+
+    ctx.beginPath();
+    ctx.arc(target.x, target.y, radius, 0, Math.PI * 2); // 3 if normal 4 if top 
+    ctx.fillStyle = "orange";
+    ctx.fill();
+    ctx.strokeStyle = "red";
+    ctx.stroke();
 }
 
 function drawClient(ctx, client) {
@@ -155,6 +170,28 @@ function loadClients() {
             updateClientsTable();
             drawMap();
         });
+}
+
+function loadTargets() {
+    fetch("/targets")
+        .then(r => r.json())
+        .then(data => {
+            targets = data;
+            drawMap();
+        });
+}
+
+function getHighestPriorityTarget() {
+    if (targets.length == 0) {
+        highestPriorityTargetID = -1;
+        return;
+    }
+
+    const maxItem = targets.reduce((max, item) =>
+        item.priority > max.priority ? item : max
+    );
+
+    highestPriorityTargetID = table.indexOf(maxItem);
 }
 
 function setSetupMode(id) {
@@ -291,7 +328,9 @@ function updateClientsTable() {
 }
 
 setInterval(loadClients, 2000);
+setInterval(loadTargets, 2000);
 loadClients();
+loadTargets();
 fetchMap();
 
 document.addEventListener("DOMContentLoaded", () => {

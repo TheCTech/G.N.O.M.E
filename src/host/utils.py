@@ -29,10 +29,23 @@ class Client():
             "direction": self.direction
         }
 
+class Target():
+    def __init__(self, x, y, priority):
+        self.x = x
+        self.y = y
+        self.priority = priority
+    
+    def to_dict(self):
+        return {
+            "x": self.x,
+            "y": self.y,
+            "priority": self.priority
+        }
+
 class LoggingUvicornFilter(Filter):
     def filter(self, record):
         message = record.getMessage()
-        if "GET /clients" in message:
+        if "GET /clients" in message or "GET /targets" in message:
             return False
         return True
 

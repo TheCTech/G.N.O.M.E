@@ -3,12 +3,14 @@ from fastapi.responses import FileResponse, PlainTextResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi_utils.tasks import repeat_every
 import logging
+import math
 from config import MAX_CLIENTS
-from utils import get_local_ip, create_client, Client, LoggingUvicornFilter
+from utils import get_local_ip, create_client, Client, Target, LoggingUvicornFilter
 
 app = FastAPI(title="G.N.O.M.E")
 
 clients: dict[int, Client] = {} # id:Client
+targets: list[Target] = []
 
 map_dimensions = [800, 600]
 
@@ -29,9 +31,10 @@ def panel():
 def placeholder_auto_target(): ### TODO: Implement real logic ###
     for id, client in clients.items():
         if client.auto_move:
-            client.target_direction += 10
-    
-        if client.target_direction >= 360: client.target_direction -= 360
+            angle = math.degrees(math.atan2(client.y - targets[0].y, targets[0].x - client.x))
+            angle = round(angle)
+
+            client.target_direction = angle
 
 @app.get("/register")
 def handle_register(uuid: str = Query(None)):
@@ -124,6 +127,22 @@ def remove_client(id: int = Query(-1)):
         return PlainTextResponse("Client with specified id doesn't exist", status.HTTP_422_UNPROCESSABLE_ENTITY)
     
     clients.pop(id)
+
+@app.post("/createTarget")
+def create_target(x: int = Query(-1), y: int = Query(-1), priority: int = Query(0)):
+    if x < 0 or y < 0:
+        return PlainTextResponse("x or y wrong", status.HTTP_422_UNPROCESSABLE_ENTITY)
+    
+    ### Placeholder, will be changed later ###
+    global targets
+    targets = [Target(x, y, priority)]
+
+@app.get("/targets")
+def get_targets():
+    return JSONResponse(
+        [target.to_dict() for target in targets],
+        status.HTTP_200_OK
+    )
 
 if __name__ == "__main__":
     print(f"IP: {get_local_ip()}")
