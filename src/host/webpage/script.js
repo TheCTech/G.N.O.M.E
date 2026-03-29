@@ -189,6 +189,7 @@ function setSetupMode(id) {
 
 function handleSetupInput(inputID, value) {
     const client = clients.find(c => c.id === setupClientID);
+    value = parseInt(value);
     switch (inputID) {
         case 1:
             client.y = value;
