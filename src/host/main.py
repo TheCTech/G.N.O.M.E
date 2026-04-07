@@ -28,7 +28,7 @@ def panel():
 
 @app.on_event("startup")
 @repeat_every(seconds=5)
-def placeholder_auto_target(): ### TODO: Implement real logic ###
+def placeholder_auto_target():
     for id, client in clients.items():
         if client.auto_move:
             angle = math.degrees(math.atan2(client.y - targets[0].y, targets[0].x - client.x))
@@ -133,9 +133,11 @@ def create_target(x: int = Query(-1), y: int = Query(-1), priority: int = Query(
     if x < 0 or y < 0:
         return PlainTextResponse("x or y wrong", status.HTTP_422_UNPROCESSABLE_ENTITY)
     
-    ### Placeholder, will be changed later ###
     global targets
-    targets = [Target(x, y, priority)]
+    targets.append(Target(x, y, priority))
+
+    # Sort targets so the target with highest priority has id of 0
+    targets.sort(key=lambda target: target.priority, reverse=True)
 
 @app.get("/targets")
 def get_targets():

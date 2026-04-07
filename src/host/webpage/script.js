@@ -2,7 +2,6 @@ let mapW = 800;
 let mapH = 600;
 let clients = [];
 let targets = [];
-let highestPriorityTargetID = -1;
 
 let setupClientID = -1;
 
@@ -38,7 +37,7 @@ function drawMap() {
 }
 
 function drawTarget(ctx, target) {
-    const radius = target === targets[highestPriorityTargetID] ? 4 : 3;
+    const radius = target === targets[0] ? 4 : 2;
 
     ctx.beginPath();
     ctx.arc(target.x, target.y, radius, 0, Math.PI * 2); // 3 if normal 4 if top 
