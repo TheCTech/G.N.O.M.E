@@ -1,3 +1,4 @@
+import time
 from logging import Filter
 
 class Client():
@@ -34,6 +35,7 @@ class Target():
         self.x = x
         self.y = y
         self.priority = priority
+        self.created_at = time.time()
     
     def to_dict(self):
         return {

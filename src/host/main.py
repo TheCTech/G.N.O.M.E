@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi_utils.tasks import repeat_every
 import logging
 import math
+import time
 from config import MAX_CLIENTS
 from utils import get_local_ip, create_client, Client, Target, LoggingUvicornFilter
 
@@ -35,6 +36,17 @@ def placeholder_auto_target():
             angle = round(angle)
 
             client.target_direction = angle
+
+@app.on_event("startup")
+@repeat_every(seconds=5)
+def cleanup_targets():
+    global targets
+    now = time.time()
+
+    targets = [
+        target for target in targets
+        if now - target.created_at < 60 # Remove targets after 60s
+    ]
 
 @app.get("/register")
 def handle_register(uuid: str = Query(None)):
